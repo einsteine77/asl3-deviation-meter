@@ -1,0 +1,15 @@
+[Unit]
+Description=ASL3 Deviation Meter (level/deviation meter + live listen)
+After=network.target asterisk.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/lib/m444-meter/meter.py
+Restart=always
+RestartSec=2
+User=root
+Nice=-2
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

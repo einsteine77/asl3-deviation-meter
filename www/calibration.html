@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calibration · ASL3 Deviation Meter</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css?v=2.0.0">
+</head>
+<body>
+<main>
+  <header>
+    <div><p class="eyebrow"><a href="/" style="color:inherit">← BACK TO THE METER</a></p><h1>Deviation calibration</h1></div>
+    <div id="status" class="status offline"><i></i><span>Connecting</span></div>
+  </header>
+
+  <section class="card">
+    <div class="section-head"><h2>Live</h2><small id="lan-note"></small></div>
+    <div class="live">
+      <div><small>SIDE</small><span id="l-side">—</span></div>
+      <div><small>LEVEL</small><span id="l-db">—</span> dBFS</div>
+      <div><small>PEAK (3 s)</small><span id="l-pk">—</span> dBFS</div>
+      <div><small>DEVIATION</small><span id="l-dev">—</span> kHz</div>
+    </div>
+    <ol class="steps">
+      <li><b>RX:</b> key a radio or service monitor into the receiver with a steady 1 kHz tone at a known deviation (3.0 kHz is typical). Wait until the side reads RX, then enter the deviation and press Calibrate.</li>
+      <li><b>TX:</b> send a steady tone through the network (a parrot or another node), read the transmitter's deviation on a service monitor, and enter it while the tone is still playing.</li>
+      <li>Calibrate uses the median peak of the last 2 seconds on that side. If you already know the kHz-at-full-scale figure, enter it directly.</li>
+    </ol>
+  </section>
+
+  <section class="cal-grid">
+    <div class="card cal-card" data-dir="rx">
+      <h2><span class="tag rx">RX</span> Local receiver</h2>
+      <small>FULL SCALE (0 dBFS PEAK)</small>
+      <div><span class="val" data-fs>—</span> kHz</div>
+      <form data-tone><input type="number" step="0.01" min="0.1" max="10" value="3.00" required> kHz known deviation <button class="btn primary">Calibrate from last 2 s</button></form>
+      <form data-fsform><input type="number" step="0.01" min="0.5" max="100" placeholder="kHz @ 0 dBFS" required><button class="btn">Set full scale</button><button class="btn" type="button" data-reset>Reset</button></form>
+      <div class="msg" data-msg></div>
+    </div>
+    <div class="card cal-card" data-dir="tx">
+      <h2><span class="tag tx">TX</span> Network to transmitter</h2>
+      <small>FULL SCALE (0 dBFS PEAK)</small>
+      <div><span class="val" data-fs>—</span> kHz</div>
+      <form data-tone><input type="number" step="0.01" min="0.1" max="10" value="3.00" required> kHz known deviation <button class="btn primary">Calibrate from last 2 s</button></form>
+      <form data-fsform><input type="number" step="0.01" min="0.5" max="100" placeholder="kHz @ 0 dBFS" required><button class="btn">Set full scale</button><button class="btn" type="button" data-reset>Reset</button></form>
+      <div class="msg" data-msg></div>
+    </div>
+  </section>
+  <footer><span>TX audio is measured before the node's pre-emphasis, so voice deviation on the air rises with pitch. Calibrate TX with a 1 kHz tone.</span></footer>
+</main>
+<script src="/calibration.js?v=2.0.0"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""m444-tap - sits in app_rpt's outstreamcmd pipeline.
+
+Copies the node's outstream audio (signed 16-bit, 8 kHz, mono) to stdout
+unchanged, so lame/ezstream keep working, and mirrors every chunk to the
+meter service over UDP on 127.0.0.1.
+
+With duplex = 0, app_rpt writes local receiver audio into outstream while
+COS is up and the node's transmit audio (network + telemetry) otherwise, so
+this one feed covers both directions.
+
+Never blocks Asterisk: if the downstream encoder stalls or dies, audio for
+it is dropped (whole samples only) and the meter keeps getting fed.
+
+  m444-tap            pass-through mode (stdin -> stdout + meter)
+  m444-tap --sink     meter only (nothing downstream)
+"""
+import os
+import signal
+import socket
+import sys
+
+signal.signal(signal.SIGPIPE, signal.SIG_IGN)
+PORT = int(os.environ.get("M444_UDP_PORT", "47444"))
+DEST = ("127.0.0.1", PORT)
+MAX_PENDING = 64 * 1024          # ~4 s of audio held for a slow encoder
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.setblocking(False)
+
+out_ok = "--sink" not in sys.argv
+pending = bytearray()
+if out_ok:
+    try:
+        os.set_blocking(1, False)
+    except OSError:
+        out_ok = False
+
+
+def flush():
+    global out_ok
+    while pending:
+        try:
+            n = os.write(1, pending)
+        except BlockingIOError:
+            return
+        except OSError:          # encoder gone; keep feeding the meter
+            out_ok = False
+            pending.clear()
+            return
+        del pending[:n]
+
+
+while True:
+    try:
+        d = os.read(0, 4096)
+    except InterruptedError:
+        continue
+    if not d:
+        break
+    try:
+        sock.sendto(d, DEST)
+    except OSError:
+        pass
+    if out_ok:
+        if len(pending) + len(d) > MAX_PENDING:
+            # drop the oldest audio, keeping 16-bit sample alignment
+            drop = len(pending) + len(d) - MAX_PENDING
+            drop += drop & 1
+            del pending[:drop]
+        pending += d
+        flush()
